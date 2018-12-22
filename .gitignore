@@ -1,7 +1,19 @@
 .metadata/
 .recommenders/
-.classpath
-.project
 .settings/
 target/
 RemoteSystemsTempFiles/
+Servers/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.springBeans
+deployment
+tempbar
+tempclasses
+bin
+deposit
+
