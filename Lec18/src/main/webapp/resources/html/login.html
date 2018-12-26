@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+</head>
+<body>
+	<h1>Login</h1>
+	<form action="/lec18/memLogin1" method="post">
+		using HttpServletRequest<br>
+		ID : <input type="text" name="memId" ><br>
+		PW : <input type="password" name="memPw" ><br>
+		<input type="submit" value="Login1" ><br>
+	</form>
+	
+	<form action="/lec18/memLogin2" method="post">
+		<br>using @RequestParam annotations<br>
+		ID : <input type="text" name="memId" ><br>
+		PW : <input type="password" name="memPw" ><br>
+		<input type="submit" value="Login2" >
+	</form>
+	
+	<a href="/lec18/resources/html/memJoin.html">JOIN</a> &nbsp;&nbsp; <a href="/lec18/resources/html/index.html">MAIN</a>
+</body>
+</html>
