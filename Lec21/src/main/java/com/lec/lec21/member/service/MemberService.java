@@ -18,7 +18,14 @@ public class MemberService implements IMemberService {
 	
 	@Override
 	public void memberRegister(Member member) {
-		printMembers(dao.memberInsert(member));
+		int result = dao.memberInsert(member);
+		
+		if(result == 0) {
+			System.out.println("Join Fail!");
+		}else {
+			System.out.println("Join Success!");
+		}
+
 	}
 
 	@Override
@@ -32,15 +39,26 @@ public class MemberService implements IMemberService {
 	@Override
 	public Member memberModify(Member member) {
 		
-		Member memAft = dao.memberUpdate(member);
-		printMember(memAft);
+		int result = dao.memberUpdate(member);
 		
-		return memAft;
+		if(result == 0) {
+			System.out.println("Modifying Fail!");
+		}else {
+			System.out.println("Modifying Success!");
+		}
+		
+		return member;
 	}
 	
 	@Override
 	public void memberRemove(Member member) {
-		printMembers(dao.memberDelete(member));
+		int result = dao.memberDelete(member);
+		
+		if(result == 0) {
+			System.out.println("Remove Fail!");
+		}else {
+			System.out.println("Remove Success!");
+		}
 	}
 	
 	private void printMembers(Map<String, Member> map) {
