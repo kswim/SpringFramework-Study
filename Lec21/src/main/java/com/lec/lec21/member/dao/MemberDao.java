@@ -9,25 +9,30 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import com.lec.lec21.member.Member;
+import com.mchange.v2.c3p0.DriverManagerDataSource;
 
 @Repository
 public class MemberDao implements IMemberDao {
 
 	private String driver = "oracle.jdbc.driver.OracleDriver";
-	private String url = "jdbc:oracle:thin:@localhost:1521:oraknu";
+	private String jdbcUrl = "jdbc:oracle:thin:@localhost:1521:oraknu";
 	private String userId;
 	private String userPw;
 
-	private Connection conn = null;
-	private PreparedStatement pstmt = null;
-	private ResultSet rs = null;
-
+	private DriverManagerDataSource dataSource;
+	// org.springframework.jdbc.datasource DriverManagerDataSource dataSource; 를 사용할 수도 있다.
+	private JdbcTemplate template;
+	
 	private HashMap<String, Member> dbMap;
 	
 	private static Properties prop;
@@ -47,118 +52,68 @@ public class MemberDao implements IMemberDao {
 
 		userId  = prop.getProperty("userId");
 		userPw  = prop.getProperty("userPw");
+		
+		dataSource = new DriverManagerDataSource();
+		dataSource.setDriverClass(driver);
+		dataSource.setJdbcUrl(jdbcUrl);
+		dataSource.setUser(userId);
+		dataSource.setPassword(userPw);
+		
+		template = new JdbcTemplate();
+		template.setDataSource(dataSource);
 	}
 	
 	@Override
 	public int memberInsert(Member member) {
-		
 		int result = 0;
+		String sql = "INSERT INTO member (memId, memPW, memMail) values (?, ?, ?)";
 		
-		try {
-			Class.forName(driver);
-			
-			conn = DriverManager.getConnection(url, userId, userPw);
-			String sql = "INSERT INTO member (memId, memPW, memMail) values (?, ?, ?)";
-			pstmt = conn.prepareStatement(sql.toString());
-			
-			pstmt.setString(1, member.getMemId());
-			pstmt.setString(2, member.getMemPw());
-			pstmt.setString(3, member.getMemMail());
-
-			result = pstmt.executeUpdate(); //데이터베이스로 쿼리문이 날라감
-			
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			
-				try {
-					if(pstmt != null) pstmt.close();
-					if(conn != null) conn.close();
-					
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			
-		}
-		
+		result = template.update(sql, member.getMemId(), member.getMemPw(), member.getMemMail());
 		
 		return result;
-		
 	}
 
 	@Override
 	public Member memberSelect(Member member) {
-		Member mem = null;
 		
-		try {
-			Class.forName(driver);
-			conn = DriverManager.getConnection(url, userId, userPw);
-			String sql = "SELECT * FROM member WHERE memId = ? AND memPw = ?";
-			pstmt = conn.prepareStatement(sql);
-			pstmt.setString(1, member.getMemId());
-			pstmt.setString(2, member.getMemPw());
-			rs = pstmt.executeQuery();
+		List<Member> members = null;
+		
+		String sql = "SELECT * FROM member WHERE memId = ? AND memPw = ?";
+		
+		//template.query()는 파라매터의 sql을 실행하고 결과로 나온 ResultSet을 RowMapper가 Member 객체로 매핑해준다!-> return값은 List<Member>
+		members = template.query(sql, new PreparedStatementSetter() {
 			
-			while (rs.next()) {
-				String memId = rs.getString("memid");
-				String memPw = rs.getString("mempw");
-				String memMail = rs.getString("memMail");
+			@Override
+			public void setValues(PreparedStatement pstmt) throws SQLException {
+				pstmt.setString(1, member.getMemId());
+				pstmt.setString(2, member.getMemPw());
 				
-				mem = new Member();
-				mem.setMemId(memId);
-				mem.setMemPw(memPw);
-				mem.setMemMail(memMail);
 			}
-			
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-				if(conn != null) conn.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
+		}, new RowMapper<Member>() {
+
+			@Override
+			public Member mapRow(ResultSet rs, int rowNum) throws SQLException {
+				Member mem = new Member();
+				mem.setMemId(rs.getString("memId"));
+				mem.setMemPw(rs.getString("memPw"));
+				mem.setMemMail(rs.getString("memMail"));
+				return mem;
 			}
-		}
 		
-		return mem;
+		});
+	
+		if(members.isEmpty()) return null;
+		
+		return members.get(0);
 		
 	}
 
 	@Override
 	public int memberUpdate(Member member) {
-		
 		int result = 0;
+		String sql = "UPDATE member SET memPw = ?, memMail = ? WHERE memId = ?";
 		
-		try {
-			
-			Class.forName(driver);
-			conn = DriverManager.getConnection(url, userId, userPw);
-			String sql = "UPDATE member SET memPw = ?, memMail = ? WHERE memId = ?";
-			pstmt = conn.prepareStatement(sql);
-			pstmt.setString(1, member.getMemPw());
-			pstmt.setString(2, member.getMemMail());
-			pstmt.setString(3, member.getMemId());
-			result = pstmt.executeUpdate();
-			
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if(pstmt != null) pstmt.close();
-				if(conn != null) conn.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
+		result = template.update(sql, member.getMemPw(), member.getMemMail(), member.getMemId());
 		
 		return result;
 		
@@ -166,33 +121,12 @@ public class MemberDao implements IMemberDao {
 
 	@Override
 	public int memberDelete(Member member) {
-		
 		int result = 0;
+		String sql = "DELETE member WHERE memId = ? AND memPw = ?";
 		
-		try {
-			Class.forName(driver);
-			conn = DriverManager.getConnection(url, userId, userPw);
-			String sql = "DELETE member WHERE memId = ? AND memPw = ?";
-			pstmt = conn.prepareStatement(sql);
-			pstmt.setString(1, member.getMemId());
-			pstmt.setString(2, member.getMemPw());
-			result = pstmt.executeUpdate();
-			
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if(pstmt != null) pstmt.close();
-				if(conn != null) conn.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
-		
+		result = template.update(sql, member.getMemId(), member.getMemPw());
+
 		return result;
-		
 	}
 
 }
