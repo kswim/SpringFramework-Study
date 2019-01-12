@@ -1,5 +1,6 @@
 package com.lec.lec21.member.dao;
 
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
@@ -13,54 +14,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import com.lec.lec21.member.Member;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.DriverManagerDataSource;
 
 @Repository
 public class MemberDao implements IMemberDao {
 
-	private String driver = "oracle.jdbc.driver.OracleDriver";
-	private String jdbcUrl = "jdbc:oracle:thin:@localhost:1521:oraknu";
-	private String userId;
-	private String userPw;
-
-	private DriverManagerDataSource dataSource;
-	// org.springframework.jdbc.datasource DriverManagerDataSource dataSource; 를 사용할 수도 있다.
+	//private DriverManagerDataSource dataSource;
+	//org.springframework.jdbc.datasource DriverManagerDataSource dataSource; 를 사용할 수도 있다.
+	private ComboPooledDataSource dataSource;
 	private JdbcTemplate template;
 	
-	private HashMap<String, Member> dbMap;
-	
-	private static Properties prop;
-	
-	public MemberDao() {
-		prop = new Properties();
-		
-		String config = "config.properties";
-		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-		URL url = classLoader.getResource(config); 
-
-		try {
-			prop.load(url.openStream());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}	
-
-		userId  = prop.getProperty("userId");
-		userPw  = prop.getProperty("userPw");
-		
-		dataSource = new DriverManagerDataSource();
-		dataSource.setDriverClass(driver);
-		dataSource.setJdbcUrl(jdbcUrl);
-		dataSource.setUser(userId);
-		dataSource.setPassword(userPw);
-		
-		template = new JdbcTemplate();
-		template.setDataSource(dataSource);
+	@Autowired	
+	public MemberDao(ComboPooledDataSource dataSource) {
+		this.template = new JdbcTemplate(dataSource);
 	}
 	
 	@Override

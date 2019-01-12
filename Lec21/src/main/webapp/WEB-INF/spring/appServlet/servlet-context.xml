@@ -14,6 +14,20 @@
 
 	<!-- Handles HTTP GET requests for /resources/** by efficiently serving up static resources in the ${webappRoot}/resources directory -->
 	<resources mapping="/resources/**" location="/resources/" />
+	<!-- jdbc 설정을 위한 드라이버 정보를 가져오기 위해 properties 파일을 가져올 수 있도록 다음과 같은 태그를 추가해준다. -->
+	<context:property-placeholder location="/WEB-INF/*.properties" /> 
+
+  	<beans:bean id="dataSource"
+        class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <beans:property name="driverClass" value="${jdbc.driver}" />
+        <beans:property name="jdbcUrl" value="${jdbc.url}" />
+        <beans:property name="user" value="${jdbc.username}" />
+        <beans:property name="password" value="${jdbc.password}" />
+	 	<beans:property name="maxPoolSize" value="200" />
+        <beans:property name="checkoutTimeout" value="60000" />
+        <beans:property name="maxIdleTime" value="1800" />
+        <beans:property name="idleConnectionTestPeriod" value="600" />
+	</beans:bean>
 
 	<!-- Resolves views selected for rendering by @Controllers to .jsp resources in the /WEB-INF/views directory -->
 	<beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
